@@ -11,14 +11,25 @@ return id;
 
 // Todo: create a function to create a task card
 function createTaskCard(task){
-let card = `<div id="task-${task.id}" class="card task-card mb-3">
-<div class="card-body">
-<h5 class="card-title">${task.title}</h5>
-<p class="card-text">${task.description}</p>
-<p class="card-text"><small class="text-muted">Due: ${task.dueDate}</small></p>
-<button type="button" class="btn btn-warning btn-sm float-end delete-task-btn">Delete</button>
-</div>
-</div>`;
+const now = dayjs();
+const taskDueDate = dayjs(task.dueDate, 'YYYY-MM-DD'); 
+    
+let cardClass = '';
+if (now.isSame(taskDueDate, 'day')) {
+cardClass = 'bg-warning text-white';
+} else if (now.isAfter(taskDueDate)) {
+cardClass = 'bg-danger text-white';
+}
+
+let card = $('<div>')
+.attr('id', 'task-' + task.id)
+.addClass('card task-card mb-3 ' + cardClass)
+.append($('<div>').addClass('card-body')
+.append($('<h5>').addClass('card-title').text(task.title))
+.append($('<p>').addClass('card-text').text(task.description))
+.append($('<p>').addClass('card-text').append($('<small>').addClass('text-muted').text('Due: ' + task.dueDate)))
+.append($('<button>').addClass('btn btn-warning btn-sm float-end delete-task-btn').text('Delete'))
+);
 return card;
 }
   
@@ -53,18 +64,44 @@ localStorage.setItem("nextId", nextId);
 $("#formModal").modal("hide");
 renderTaskList();
 }
-  
+
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event){
-
+let taskId = $(event.target).closest(".task-card").attr("id").split("-")[1];
+taskList = taskList.filter(task => task.id !== parseInt(taskId));
+localStorage.setItem("tasks", JSON.stringify(taskList));
+renderTaskList();
 }
-
+$(".container").on("click", ".delete-task-btn", handleDeleteTask);
+    
 // Todo: create a function to handle dropping a task into a new status lane
-function handleDrop(event, ui) {
-
+function handleDrop(event, ui){
+let taskId = ui.draggable.attr("id").split("-")[1];
+let newStatus = $(event.target).closest(".lane").attr("id");
+taskList.forEach(task => {
+if (task.id === parseInt(taskId)) {
+task.status = newStatus;
 }
+});
 
+localStorage.setItem("tasks", JSON.stringify(taskList));
+renderTaskList();
+}
+    
 // Todo: when the page loads, render the task list, add event listeners, make lanes droppable, and make the due date field a date picker
-$(document).ready(function () {
-
+$(document).ready(function (){   
+$("#taskDueDate").datepicker({
+format: 'yyyy-mm-dd',
+autoclose: true,
+todayHighlight: true
+});
+renderTaskList();
+$("#taskForm").submit(handleAddTask);
+$(".lane").droppable({
+accept: ".task-card",
+drop: handleDrop
+});
+var myModal = new bootstrap.Modal(document.getElementById('formModal'), {
+keyboard: false
+});
 });

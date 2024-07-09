@@ -15,3 +15,10 @@ body {
     cursor: grab;
   }
   
+  .bg-light {
+    border: solid;
+  }
+
+  .card-header{
+    border: solid;
+  }
